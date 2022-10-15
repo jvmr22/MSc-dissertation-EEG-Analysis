@@ -27,6 +27,7 @@ class dnn(nn.Module):
         return self.dnn_net(x)
 
 def train_dnn(train_data, test_data, train_label, test_label, lr, device):
+    # O dado de treino possui 310 colunas 
     model = dnn(310, 128, 64, 32, 3)
     model.to(device)
     train_data = train_data.to(device)
@@ -77,7 +78,9 @@ def train_dnn(train_data, test_data, train_label, test_label, lr, device):
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 # eeg_dir = '../Features/China/feature_smooth_eeg_1s/'
+os.environ['FILE_PATH'] = '../SEED/SEED_EEG/'
 FILE_PATH = os.getenv('FILE_PATH', '/mnt/g/Meu Drive/mestrado_ppget')
+print(FILE_PATH)
 eeg_dir = os.path.join(FILE_PATH,"SEED_EEG/ExtractedFeatures/")
 eeg_file_list = os.listdir(eeg_dir)
 eeg_file_list.sort()
@@ -97,6 +100,7 @@ for item in eeg_file_list:
     for fn in feature_list:
         print(fn)
         train_data, test_data, train_label, test_label = generating_data(all_data, label_list, fn)
+        # Data Normalizing
         train_data = preprocessing.scale(train_data)
         test_data = preprocessing.scale(test_data)
 
