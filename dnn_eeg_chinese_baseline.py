@@ -2,7 +2,7 @@ import numpy as np
 import os
 import torch
 import torch.nn as nn 
-
+from datetime import datetime
 from sklearn import preprocessing 
 import pickle 
 import scipy.io as sio 
@@ -90,15 +90,21 @@ if not os.path.exists(res_dir):
     os.mkdir(res_dir)
 
 feature_list = ['de_LDS']
+# Label for each movie
 label_list = np.array([1,0,-1,-1,0,1,-1,0,1,1,0,-1,0,1,-1]) + 1 # -1 for 
 learning_rate = [0.00001, 0.00003, 0.00005, 0.00007, 0.00009,0.0001, 0.0003, 0.0005, 0.0007, 0.0009, 0.001, 0.003, 0.005, 0.007, 0.009, 0.01, 0.03, 0.05, 0.07, 0.09]
-
+print(f"- {len(learning_rate)} learning rates for tests")
 for item in eeg_file_list:
-    print(item)
+    cur_user = item.split("_")[0]
+    user_session = datetime.strptime(item.split("_")[1][:-4],"%Y%m%d")
+    print(f"- reading file: {item}\n--user:{cur_user}, sessions: {user_session}")
+    # all_data has 180 keys: 6 features (de, psd, etc) X 2 filters (LDS, movAve) x 15 videos = 180
     all_data = sio.loadmat(os.path.join(eeg_dir, item))
     
     for fn in feature_list:
-        print(fn)
+        # fn is each feature to analyse [asm', 'psd', 'rasm', 'dasm', 'dcau', 'de']
+        # each one with ['LDS', 'movAve'] as filter.
+        print(f"-- feature_filter - {fn}")
         train_data, test_data, train_label, test_label = generating_data(all_data, label_list, fn)
         # Data Normalizing
         train_data = preprocessing.scale(train_data)
@@ -112,6 +118,6 @@ for item in eeg_file_list:
         for idx, lr in enumerate(learning_rate):
             best_res = train_dnn(train_data_tensor, test_data_tensor, train_label_tensor, test_label_tensor, lr, device)
 
-            if not os.path.exists(os.path.join(res_dir, fn+str(idx))):
-                os.mkdir(os.path.join(res_dir, fn+str(idx)))
-            pickle.dump(best_res, open(os.path.join(res_dir, fn+str(idx), item[:-4]),'wb'))
+            if not os.path.exists(os.path.join(res_dir, fn+f"_lr{idx}_{lr}")):
+                os.mkdir(os.path.join(res_dir, fn+f"_lr{idx}_{lr}"))
+            pickle.dump(best_res, open(os.path.join(res_dir, fn+f"_lr{idx}_{lr}", item[:-4]),'wb'))
