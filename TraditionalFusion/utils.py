@@ -2,7 +2,10 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import svm
+from warnings import simplefilter
+from sklearn.exceptions import ConvergenceWarning
 import pickle
+simplefilter("ignore", category=ConvergenceWarning)
 
 def concat_process(eeg_data, eye_data):
     train_data_eye = np.asarray(eye_data['cell']['train_data_eye'].tolist()).squeeze()
@@ -123,6 +126,7 @@ def svm_classification(train_data, test_data, train_label, test_label):
     best_res['p_label'] = 0
     best_res['test_label'] = test_label 
     for c in range(-10, 10):
+        print(f"\t\t evaluating LinearSVC kernel with c={c}")
         clf = svm.LinearSVC(C=2**c)
         clf.fit(train_data, train_label)
         p_labels = clf.predict(test_data)
@@ -134,6 +138,7 @@ def svm_classification(train_data, test_data, train_label, test_label):
             best_res['p_label'] = p_labels
             best_res['decision_val'] = decision_value 
     for c in np.arange(0.1, 20, 0.5):
+        print(f"\t\t evaluating LinearSVC kernel with c={c}")
         clf = svm.LinearSVC(C=c)
         clf.fit(train_data, train_label)
         p_labels = clf.predict(test_data)
