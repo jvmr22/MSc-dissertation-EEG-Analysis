@@ -5,6 +5,7 @@ from sklearn import svm
 from warnings import simplefilter
 from sklearn.exceptions import ConvergenceWarning
 import pickle
+import pandas as pd
 simplefilter("ignore", category=ConvergenceWarning)
 
 def concat_process(eeg_data, eye_data):
@@ -81,6 +82,67 @@ def generating_data(data_dict, clip_label, feature_name):
         test_data = np.vstack((test_data, used_data))
         test_label = np.hstack((test_label, used_label))
     return train_data, test_data, train_label, test_label
+
+def generating_data_as_dataframe(data_dict, clip_label, feature_name):
+    # first 9 movies as training, the last 6 movies as testing
+    train_data = data_dict[feature_name+'1']
+    print("\t### TRAIN ###")
+    print(f"\t\t{feature_name + '1'} - video 1 - {train_data.shape} observacoes")
+    _, num, _ = train_data.shape 
+    train_label = np.zeros(num,) + clip_label[0]
+
+    train_film_ref = np.zeros(num,) + 1
+
+    train_data = np.swapaxes(train_data, 0, 1)
+    train_data = np.reshape(train_data, (num, -1))
+    train_residual_index = [2,3,4,5,6,7,8,9]
+    for ind,i in enumerate(train_residual_index):
+        used_data = data_dict[feature_name + str(i)]
+        _, num, _ = used_data.shape 
+        used_label = np.zeros(num,) + clip_label[ind+1]
+
+        used_film_ref = np.zeros(num,) + i
+
+        used_data = np.swapaxes(used_data, 0, 1)
+        used_data = np.reshape(used_data, (num, -1))
+        print(f"\t\t{feature_name + str(i)} - video {str(i)} - {used_data.shape} observacoes")
+        train_data = np.vstack((train_data, used_data))
+        train_label = np.hstack((train_label, used_label))
+
+        train_film_ref = np.hstack((train_film_ref, used_film_ref))
+     
+    test_data = data_dict[feature_name+'10']
+    print("\t### TEST ###")
+    print(f"\t\t{feature_name + '10'} - video 10 - {test_data.shape} observacoes")
+    _, num, _ = test_data.shape 
+    test_label = np.zeros(num,) + clip_label[9]
+
+    test_film_ref = np.zeros(num,) + 10
+
+    test_data = np.swapaxes(test_data, 0, 1)
+    test_data = np.reshape(test_data, (num, -1))
+    test_residual_index = [11,12,13,14,15]
+    for ind,i in enumerate(test_residual_index):
+        used_data = data_dict[feature_name + str(i)]
+        _, num, _ = used_data.shape 
+        used_label = np.zeros(num,) + clip_label[ind+10]
+
+        used_film_ref = np.zeros(num,) + i
+
+        used_data = np.swapaxes(used_data, 0, 1)
+        used_data = np.reshape(used_data, (num, -1))
+        print(f"\t\t{feature_name + str(i)} - video {str(i)} - {used_data.shape} observacoes")
+        test_data = np.vstack((test_data, used_data))
+        test_label = np.hstack((test_label, used_label))
+
+        test_film_ref = np.hstack((test_film_ref, used_film_ref))
+
+    all_data = np.vstack((train_data,test_data))
+    all_data_df = pd.DataFrame(all_data)
+
+    all_films_ref = np.hstack((train_film_ref, test_film_ref))
+    all_films_ref_df = pd.DataFrame(all_films_ref)
+    return all_data_df, all_films_ref_df
 
 def logistic_classification(train_data, test_data, train_label, test_label):
     best_res = {}
