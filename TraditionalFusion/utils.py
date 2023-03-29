@@ -74,7 +74,7 @@ def generating_data(data_dict, clip_label, feature_name):
     for ind,i in enumerate(test_residual_index):
         used_data = data_dict[feature_name + str(i)]
         _, num, _ = used_data.shape 
-        used_label = np.zeros(num,) + clip_label[ind+9]
+        used_label = np.zeros(num,) + clip_label[ind+10]
         used_data = np.swapaxes(used_data, 0, 1)
         used_data = np.reshape(used_data, (num, -1))
         print(f"\t\t{feature_name + str(i)} - video {str(i)} - {used_data.shape} observacoes")
