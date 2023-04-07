@@ -8,6 +8,13 @@ import pickle
 import pandas as pd
 simplefilter("ignore", category=ConvergenceWarning)
 
+all_freqs_dict = {
+    "delta":0,
+    "theta":1,
+    "alpha":2,
+    "beta":3,
+    "gamma":4}
+
 def concat_process(eeg_data, eye_data):
     train_data_eye = np.asarray(eye_data['cell']['train_data_eye'].tolist()).squeeze()
     test_data_eye = np.asarray( eye_data['cell']['test_data_eye'].tolist()).squeeze()
@@ -44,39 +51,66 @@ def concat_process(eeg_data, eye_data):
 
 
 
-def generating_data(data_dict, clip_label, feature_name):
+def generating_data(data_dict, clip_label, feature_name, frequencies_selection=['all']):
     # first 9 movies as training, the last 6 movies as testing
     train_data = data_dict[feature_name+'1']
     print("\t### TRAIN ###")
-    print(f"\t\t{feature_name + '1'} - video 1 - {train_data.shape} observacoes")
     _, num, _ = train_data.shape 
     train_label = np.zeros(num,) + clip_label[0]
     train_data = np.swapaxes(train_data, 0, 1)
-    train_data = np.reshape(train_data, (num, -1))
+    if 'all' in frequencies_selection:
+        train_data = np.reshape(train_data, (num, -1))
+    else:
+        # apenas uma frequencia por vez
+        # TODO processamento paralelo de cada frequencia
+        frequencie_idx = all_freqs_dict[frequencies_selection[0]]
+        print(f"## select only {frequencies_selection} freq - idx: {frequencie_idx} ##")
+        train_data = train_data[:,:,frequencie_idx]
+    print(f"\t\t{feature_name + '1'} - video 1 - {train_data.shape} observacoes")
     train_residual_index = [2,3,4,5,6,7,8,9]
     for ind,i in enumerate(train_residual_index):
         used_data = data_dict[feature_name + str(i)]
         _, num, _ = used_data.shape 
         used_label = np.zeros(num,) + clip_label[ind+1]
         used_data = np.swapaxes(used_data, 0, 1)
-        used_data = np.reshape(used_data, (num, -1))
+        if 'all' in frequencies_selection:
+            used_data = np.reshape(used_data, (num, -1))
+        else:
+            # apenas uma frequencia por vez
+            # TODO processamento paralelo de cada frequencia
+            frequencie_idx = all_freqs_dict[frequencies_selection[0]]
+            used_data = used_data[:,:,frequencie_idx]
+            
         print(f"\t\t{feature_name + str(i)} - video {str(i)} - {used_data.shape} observacoes")
         train_data = np.vstack((train_data, used_data))
         train_label = np.hstack((train_label, used_label))
     
     test_data = data_dict[feature_name+'10']
     print("\t### TEST ###")
-    print(f"\t\t{feature_name + '10'} - video 10 - {test_data.shape} observacoes")
     _, num, _ = test_data.shape 
     test_label = np.zeros(num,) + clip_label[9]
     test_data = np.swapaxes(test_data, 0, 1)
-    test_data = np.reshape(test_data, (num, -1))
+    if 'all' in frequencies_selection:
+        test_data = np.reshape(test_data, (num, -1))
+    else:
+        # apenas uma frequencia por vez
+        # TODO processamento paralelo de cada frequencia
+        frequencie_idx = all_freqs_dict[frequencies_selection[0]]
+        test_data = test_data[:,:,frequencie_idx]
+    print(f"\t\t{feature_name + '10'} - video 10 - {test_data.shape} observacoes")
     test_residual_index = [11,12,13,14,15]
     for ind,i in enumerate(test_residual_index):
         used_data = data_dict[feature_name + str(i)]
         _, num, _ = used_data.shape 
         used_label = np.zeros(num,) + clip_label[ind+10]
         used_data = np.swapaxes(used_data, 0, 1)
+        if 'all' in frequencies_selection:
+            used_data = np.reshape(used_data, (num, -1))
+        else:
+            # apenas uma frequencia por vez
+            # TODO processamento paralelo de cada frequencia
+            frequencie_idx = all_freqs_dict[frequencies_selection[0]]
+            used_data = used_data[:,:,frequencie_idx]
         used_data = np.reshape(used_data, (num, -1))
         print(f"\t\t{feature_name + str(i)} - video {str(i)} - {used_data.shape} observacoes")
         test_data = np.vstack((test_data, used_data))
